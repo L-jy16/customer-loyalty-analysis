@@ -60,6 +60,10 @@ python -m nbconvert --execute --to notebook --inplace notebooks/analysis_report.
 
 노트북은 `data/processed/ecommerce_clean.csv`와 `data/processed/customer_rfm.csv`를 저장한다. 실행 결과가 포함된 노트북과 `reports/figures/`의 PNG 6종에서 동일한 차트를 확인할 수 있다.
 
+실행 화면에서 nbconvert의 노트북 저장 메시지와 종료 코드 0을 확인할 수 있다. [실행 로그](reports/notebook_execution.log)와 [실행 결과가 포함된 노트북](notebooks/analysis_report.ipynb)도 함께 제공한다.
+
+![노트북 전체 실행 성공 화면](reports/notebook_execution_capture.png)
+
 ## 주요 분석
 
 - `head()`, `info()`, `describe()`로 데이터 구조를 확인한다. 상품명 결측은 상품 ID별 최빈값으로 대치한다.
