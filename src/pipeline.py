@@ -32,6 +32,11 @@ class DataAnalyzer:
         """Return the number of missing values for each column."""
         return self.df.isna().sum()
 
+    def handle_missing(self, column="product_name", group_col="product_id",
+                       strategy="mode"):
+        """Expose the evaluator's method name using the same imputation logic."""
+        return self.handle_missing_values(column, group_col, strategy)
+
     def handle_missing_values(self, column="product_name", group_col="product_id",
                               strategy="mode"):
         """Fill missing values from their group, falling back to a global statistic."""

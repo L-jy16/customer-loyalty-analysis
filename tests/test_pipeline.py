@@ -58,6 +58,16 @@ class TestDataAnalyzer(unittest.TestCase):
         filled = self.analyzer.handle_missing_values("value", "group", "median")
         np.testing.assert_allclose(filled, [10, 10, 30, 50, 30])
 
+    def test_handle_missing_matches_existing_method(self):
+        original = DataAnalyzer(RAW_DATA_PATH)
+        original.load_data()
+        received = self.analyzer.handle_missing(
+            column="product_name", group_col="product_id", strategy="mode"
+        )
+        assert_series_equal(received, original.handle_missing_values())
+        assert_frame_equal(self.analyzer.df, original.df)
+        self.assertEqual(self.analyzer.missing_counts().sum(), 0)
+
     def test_iqr_and_clipping_preserve_observed_values(self):
         self.assertEqual(self.analyzer.iqr_bounds("quantity"), (-2, 6))
         outliers = self.analyzer.detect_outliers()
