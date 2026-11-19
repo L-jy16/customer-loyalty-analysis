@@ -16,13 +16,16 @@ from src.pipeline import DataAnalyzer
 class TestDataAnalyzer(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        # 테스트에 쓸 가상 데이터를 준비합니다. 같은 조건에서 같은 결과가 나오는지 확인할 때 사용합니다.
         cls.generated = generate_transactions()
 
     def setUp(self):
+        # 각 테스트는 데이터를 새로 읽고 시작해 앞선 테스트의 영향을 받지 않게 합니다.
         self.analyzer = DataAnalyzer(RAW_DATA_PATH)
         self.raw = self.analyzer.load_data()
 
     def test_generated_csv_contract_and_reproducibility(self):
+        # 빈칸을 표현하는 방식부터 맞춘 다음, 생성한 데이터와 CSV 내용이 같은지 확인합니다.
         expected = self.generated.copy()
         expected["product_name"] = expected["product_name"].astype("string")
         actual = self.raw.copy()
@@ -51,6 +54,7 @@ class TestDataAnalyzer(unittest.TestCase):
         self.assertEqual(self.analyzer.raw["product_name"].isna().sum(), 100)
 
     def test_numeric_imputation_with_global_fallback(self):
+        # 답을 손으로 확인할 수 있는 작은 데이터를 만들어 처리 결과를 검사합니다.
         self.analyzer.df = pd.DataFrame({
             "group": ["a", "a", "b", "b", "c"],
             "value": [10.0, np.nan, 30.0, 50.0, np.nan],
@@ -59,6 +63,7 @@ class TestDataAnalyzer(unittest.TestCase):
         np.testing.assert_allclose(filled, [10, 10, 30, 50, 30])
 
     def test_handle_missing_matches_existing_method(self):
+        # 두 이름의 빈칸 처리 함수를 각각 실행하고 결과가 같은지 확인합니다.
         original = DataAnalyzer(RAW_DATA_PATH)
         original.load_data()
         received = self.analyzer.handle_missing(
@@ -82,6 +87,7 @@ class TestDataAnalyzer(unittest.TestCase):
         self.assertTrue(words.between(3, 4).all())
 
         features = self.analyzer.add_image_features(image_shape=IMAGE_SHAPE)
+        # 이미지 값을 직접 계산한 결과와 분석기가 계산한 평균·표준편차가 같은지 확인합니다.
         pixels = np.asarray(self.raw["image_array"].map(json.loads).tolist())
         self.assertEqual(pixels.shape, (len(self.raw), *IMAGE_SHAPE))
         np.testing.assert_allclose(features["image_mean"], pixels.mean(axis=(1, 2)))
@@ -112,6 +118,7 @@ class TestDataAnalyzer(unittest.TestCase):
         self.assertEqual(segments["customers"].to_dict(), {
             "VIP": 89, "Loyal": 161, "New": 125, "Churned": 125,
         })
+        # 고객별 주문 수와 금액을 다시 더해 원본 합계와 비교합니다. 중복이나 빠진 거래를 찾는 검사입니다.
         self.assertEqual(rfm["frequency"].sum(), self.raw["order_id"].nunique())
         self.assertEqual(rfm["monetary"].sum(), self.raw["amount"].sum())
         self.assertEqual(rfm["recency"].min(), 0)
@@ -120,6 +127,7 @@ class TestDataAnalyzer(unittest.TestCase):
             self.analyzer.calculate_rfm(reference_date="2025-01-01")
 
     def test_rfm_dates_and_rules_at_boundaries(self):
+        # 답을 손으로 확인할 수 있는 작은 데이터를 만들어 처리 결과를 검사합니다.
         self.analyzer.df = pd.DataFrame({
             "client": ["old", "fresh", "active", "active", "active", "active"],
             "date": ["2025-10-02", "2025-12-01", "2025-11-30", "2025-12-04", "2025-12-31", "2025-12-31"],
@@ -137,6 +145,7 @@ class TestDataAnalyzer(unittest.TestCase):
         self.assertEqual(rfm.loc["active", "segment"], "VIP")
 
     def test_processed_file_keeps_raw_file_unchanged(self):
+        # 결과를 저장한 뒤에도 원본 파일 내용이 그대로인지 확인합니다.
         before = RAW_DATA_PATH.read_bytes()
         with TemporaryDirectory() as temp:
             destination = Path(temp) / "processed.csv"
